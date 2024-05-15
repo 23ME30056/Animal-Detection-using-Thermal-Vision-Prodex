@@ -1,9 +1,9 @@
 
+from ultralytics import YOLO
 import cv2
 import numpy as np
 
-# Load YOLO model
-net = cv2.dnn.readNet("yolov3.weights", "yolov3.cfg")
+model = YOLO('yolov8l.pt')
 
 # Defining classes of common animals found near highways
 common_animals = ["cat", "dog", "horse", "sheep", "cow", "deer", "rabbit", "fox", "tiger", "lion"]
@@ -35,35 +35,35 @@ while True:
     blob = cv2.dnn.blobFromImage(frame, 1/255, (320, 320), (0, 0, 0), True, crop=False)
 
     # Set input
-    net.setInput(blob)
-
-    # Get output layers
-    output_layers = net.getUnconnectedOutLayersNames()
-
-    # Forward pass
-    outputs = net.forward(output_layers)
+    results = model.predict(frame)[0]
 
     # Initialize lists for bounding boxes, confidence scores, and class IDs
     boxes = []
     confidences = []
     class_ids = []
 
+    for box in results.boxes:
+        xywh = [int(box.xywh[0][0].item()), int(box.xywh[0][1]), int(box.xywh[0][2].item()), int(box.xywh[0][3].item())]
+        boxes.append(xywh)
+        confidences.append(box.conf[0].item())
+        class_ids.append(box.cls[0].item())
+    print(class_ids)
     # Loop through outputs
-    for output in outputs:
-        for detection in output:
-            scores = detection[5:]
-            class_id = np.argmax(scores)
-            confidence = scores[class_id]
-            if confidence > 0.3 and classes[class_id] in common_animals:
-                center_x = int(detection[0] * frame.shape[1])
-                center_y = int(detection[1] * frame.shape[0])
-                w = int(detection[2] * frame.shape[1])
-                h = int(detection[3] * frame.shape[0])
-                x = int(center_x - w / 2)
-                y = int(center_y - h / 2)
-                boxes.append([x, y, w, h])
-                confidences.append(float(confidence))
-                class_ids.append(class_id)
+    # for output in outputs:
+    #     for detection in output:
+    #         scores = detection[5:]
+    #         class_id = np.argmax(scores)
+    #         confidence = scores[class_id]
+    #         if confidence > 0.3 and classes[class_id] in common_animals:
+    #             center_x = int(detection[0] * frame.shape[1])
+    #             center_y = int(detection[1] * frame.shape[0])
+    #             w = int(detection[2] * frame.shape[1])
+    #             h = int(detection[3] * frame.shape[0])
+    #             x = int(center_x - w / 2)
+    #             y = int(center_y - h / 2)
+    #             boxes.append([x, y, w, h])
+    #             confidences.append(float(confidence))
+    #             class_ids.append(class_id)
 
     # Apply non-max suppression
     indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
@@ -82,27 +82,29 @@ while True:
     cv2.line(thermal_frame, (0, center_line_y), (width, center_line_y), (0, 0, 255), 2)  # Draw the horizontal center line
 
     for i in range(len(boxes)):
-        if i in indexes:
-            x, y, w, h = boxes[i]
-            center_x = x + w // 2
-            center_y = y + h // 2
-            cv2.rectangle(thermal_frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            cv2.putText(thermal_frame, "Animal", (x, y - 10), font, 1, (255, 255, 255), 2)
-            cv2.circle(thermal_frame, (center_x, center_y), 5, (255, 0, 0), -1)  # Draw the center of the bounding box
+        if i not in indexes:
+            continue
+        if class_ids[i] == 2: continue
+        x, y, w, h = boxes[i]
+        center_x = x + w // 2
+        center_y = y + h // 2
+        cv2.rectangle(thermal_frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        cv2.putText(thermal_frame, "Animal", (x, y - 10), font, 1, (255, 255, 255), 2)
+        cv2.circle(thermal_frame, (center_x, center_y), 5, (255, 0, 0), -1)  # Draw the center of the bounding box
 
-            # Track the movement of the bounding box center
-            if i not in previous_centers:
-                previous_centers[i] = []
+        # Track the movement of the bounding box center
+        if i not in previous_centers:
+            previous_centers[i] = []
 
-            previous_centers[i].append((center_x, center_y))
+        previous_centers[i].append((center_x, center_y))
 
-            if len(previous_centers[i]) > 2:
-                # Calculate the movement direction
-                prev_center_x, prev_center_y = previous_centers[i][-2]
-                direction_y = center_y - prev_center_y
-                
-                if direction_y > 0 and center_y > center_line_y:  # Moving downwards and close to the center line
-                    cv2.putText(thermal_frame, "Brakes Activated !!", (50, 50), font, 3, (255, 0, 0), 3) 
+        if len(previous_centers[i]) > 2:
+            # Calculate the movement direction
+            prev_center_x, prev_center_y = previous_centers[i][-2]
+            direction_y = center_y - prev_center_y
+            
+            if direction_y > 0 and center_y > center_line_y:  # Moving downwards and close to the center line
+                cv2.putText(thermal_frame, "Brakes Activated !!", (50, 50), font, 3, (255, 0, 0), 3) 
                     # blue 
 
     # Display frame
