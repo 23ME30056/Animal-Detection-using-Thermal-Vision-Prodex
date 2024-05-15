@@ -23,6 +23,7 @@ points = []
 while True:
     # Read frame from the video
     ret, frame = cap.read()
+
     result = model.predict(frame)[0]
     if not ret:
         break  # Break the loop if there are no more frames
@@ -36,29 +37,22 @@ while True:
         boxes.append(xywh)
         class_ids.append(box.cls[0].item())
 
-
-    # Convert frame to grayscale
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    
-    # Apply a thermal colormap
-    thermal_frame = cv2.applyColorMap(gray, cv2.COLORMAP_JET)
-
     # Draw bounding boxes, labels, and center lines on the thermal frame
     font = cv2.FONT_HERSHEY_PLAIN
     height, width, _ = frame.shape
     center_line_x = int(width*0.5)
     center_line_y = int(height * 0.6)
 
-    cv2.line(thermal_frame, (0, center_line_y-15), (width, center_line_y-15), (0, 0, 255), 2)  # Draw the horizontal center line
-    cv2.line(thermal_frame, (center_line_x, 0), (center_line_x, height), (0, 0, 255), 2)
+    cv2.line(frame, (0, center_line_y-15), (width, center_line_y-15), (0, 0, 255), 2)  # Draw the horizontal center line
+    cv2.line(frame, (center_line_x, 0), (center_line_x, height), (0, 0, 255), 2)
 
     for i in range(len(boxes)):
         if class_ids[i] > 23 or class_ids[i] < 15: continue
         x, y, w, h = boxes[i]
         center_x = x + w // 2
         center_y = y + h // 2
-        cv2.rectangle(thermal_frame, (int(x-w/2), int(y-h/2)), (int(x+w/2), int(y+h/2)), (0, 255, 0), 2)
-        cv2.putText(thermal_frame, "Animal", (x, y - 10), font, 1, (255, 255, 255), 2)
+        cv2.rectangle(frame, (int(x-w/2), int(y-h/2)), (int(x+w/2), int(y+h/2)), (0, 255, 0), 2)
+        cv2.putText(frame, "Animal", (x, y - 10), font, 1, (255, 255, 255), 2)
         colour = (0, 255, 0)
 
         # Track the movement of the bounding box center
@@ -80,7 +74,7 @@ while True:
 
         points.append(((x, y), 5, colour, -1))
     for point in points:
-        cv2.circle(thermal_frame, *point)
+        cv2.circle(frame, *point)
         # if len(points) < 5:
         #     for point in points:
         #         cv2.circle(*point)  # Draw the center of the bounding box
@@ -91,12 +85,12 @@ while True:
         
 
     if frames_with_brakes > 3:
-        cv2.putText(thermal_frame, "Brakes Activated !!", (50, 50), font, 3, (0, 0, 0), 3) 
+        cv2.putText(frame, "Brakes Activated !!", (50, 50), font, 3, (0, 0, 0), 3) 
                     # blue 
 
     # Display frame
-    cv2.imshow('Object Detection', thermal_frame)
-    video.write(thermal_frame)
+    cv2.imshow('Object Detection', frame)
+    video.write(frame)
 
     # Break the loop if 'q' key is pressed
     if cv2.waitKey(1) & 0xFF == ord('q'):
