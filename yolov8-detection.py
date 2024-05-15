@@ -5,15 +5,6 @@ import numpy as np
 
 model = YOLO('yolov8l.pt')
 
-# Defining classes of common animals found near highways
-common_animals = ["cat", "dog", "horse", "sheep", "cow", "deer", "rabbit", "fox", "tiger", "lion"]
-
-
-# Load class names
-classes = []
-with open("coco.names", "r") as f:
-    classes = [line.strip() for line in f.readlines()]
-
 # Load video file
 video_path = "animal2.mp4"  # Path to your video file
 cap = cv2.VideoCapture(video_path)
@@ -23,11 +14,11 @@ cv2.namedWindow("Object Detection", cv2.WINDOW_NORMAL)
 cv2.setWindowProperty("Object Detection", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
 # Prepare to write to video file
-video=cv2.VideoWriter('video.avi',cv2.VideoWriter_fourcc(*'MJPG'),25,(596,336))
+video=cv2.VideoWriter('video.avi',cv2.VideoWriter_fourcc(*'MJPG'),20,(596,336))
 
 # Store the previous positions of bounding box centers
 previous_centers = {}
-
+frames_with_brakes = 0
 while True:
     # Read frame from the video
     ret, frame = cap.read()
@@ -35,11 +26,6 @@ while True:
     if not ret:
         break  # Break the loop if there are no more frames
     
-    # Preprocess frame
-    blob = cv2.dnn.blobFromImage(frame, 1/255, (320, 320), (0, 0, 0), True, crop=False)
-
-    # Set input
-
     # Initialize lists for bounding boxes, confidence scores, and class IDs
     boxes = []
     class_ids = []
@@ -94,7 +80,9 @@ while True:
             direction_y = center_y - prev_center_y
             
             if direction_y > 0 and center_y > center_line_y:  # Moving downwards and close to the center line
-                cv2.putText(thermal_frame, "Brakes Activated !!", (50, 50), font, 3, (255, 0, 0), 3) 
+                frames_with_brakes += 1
+    if frames_with_brakes >= 2:
+        cv2.putText(thermal_frame, "Brakes Activated !!", (50, 50), font, 3, (0, 0, 0), 3) 
                     # blue 
 
     # Display frame
