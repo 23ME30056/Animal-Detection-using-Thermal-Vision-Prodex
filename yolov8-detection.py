@@ -8,6 +8,7 @@ model = YOLO('yolov8l.pt')
 # Defining classes of common animals found near highways
 common_animals = ["cat", "dog", "horse", "sheep", "cow", "deer", "rabbit", "fox", "tiger", "lion"]
 
+
 # Load class names
 classes = []
 with open("coco.names", "r") as f:
