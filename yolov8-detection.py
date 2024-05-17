@@ -3,13 +3,13 @@ from ultralytics import YOLO
 import cv2
 import numpy as np
 
-model = YOLO('yolov8l.pt')
+model = YOLO('yolov8l.pt')           
 
 # Load video file
-video_path = "animal2.mp4"  # Path to your video file
+video_path = "animal2.mp4"  # Path 
 cap = cv2.VideoCapture(video_path)
 
-# OpenCV window properties
+# OpenCV window properties full screen
 cv2.namedWindow("Object Detection", cv2.WINDOW_NORMAL)
 cv2.setWindowProperty("Object Detection", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
