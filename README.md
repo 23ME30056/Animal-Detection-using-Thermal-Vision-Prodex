@@ -32,3 +32,5 @@ This Python script utilizes Ultralytics YOLO (You Only Look Once) model to detec
 - **Animal Detection**: The script uses YOLO to detect animals in the thermal video stream and draws bounding boxes around them.
 - **Movement Tracking**: It tracks the movement of detected animals and calculates the direction of their movement.
 - **Brake Activation**: If an animal is detected moving downwards and close to the center line, the script activates brakes to prevent accidents.
+
+- **NOTE**: test.mp4 is the final video from camera and animal.mp4 is the original one.
